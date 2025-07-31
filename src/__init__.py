@@ -1,0 +1,1 @@
+"""Domain availability checker package."""

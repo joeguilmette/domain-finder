@@ -330,4 +330,90 @@ python rdap_bulk_check.py --workers 20 --rate-limit 0.05 --only-free
 
 ---
 
-**Remember**: This tool is for checking availability only. Users should verify with a domain registrar before attempting to register any domain.
+## 🎯 DOMAIN RANKING TOOL
+
+### Overview
+
+The `rank_domains.py` tool helps you find the best available domains by ranking them based on multiple quality criteria. It's designed to work seamlessly with the output from `rdap_bulk_check.py`.
+
+### Ranking Criteria
+
+Domains are scored based on:
+1. **Syllable Count** - Fewer syllables = higher score (easier to say over phone)
+2. **Domain Length** - Shorter domains score higher
+3. **Keyword Relevance** - Bonus points for conversion tracking keywords:
+   - High value: track, convert, pixel, data, metric, sync, link, flow, bridge
+   - Action words: push, send, move, stream, pipe
+   - Simplicity: easy, quick, smart, pro
+4. **Compound Bonuses** - Extra points for relevant combinations (e.g., pixeltrack, datasync)
+
+### How to Use Domain Ranking
+
+#### Basic Workflow
+```bash
+# Step 1: Check domain availability
+python rdap_bulk_check.py --only-free --format csv --output available.csv
+
+# Step 2: Rank the available domains
+python rank_domains.py --input available.csv --top 50
+```
+
+#### Advanced Usage
+```bash
+# Show only domains with 5 or fewer syllables
+python rank_domains.py --max-syllables 5 --top 20
+
+# Specify custom input/output files
+python rank_domains.py --input mydomains.csv --output ranked.csv
+
+# Quiet mode (no console output)
+python rank_domains.py --quiet
+```
+
+#### Command Options
+- `--input, -i` - Input CSV file from rdap_bulk_check.py (default: available_domains.csv)
+- `--output, -o` - Output CSV file for rankings (default: ranked_domains.csv)
+- `--top, -t` - Show only top N results in console (default: 50)
+- `--max-syllables, -m` - Filter domains with more than N syllables
+- `--quiet, -q` - Suppress console output
+
+### Example: Finding a Domain for Your App
+
+```bash
+# 1. Create a list of domain ideas
+cat > domains.txt << 'EOF'
+trackify.com
+syncify.com
+pixeltrackify.com
+dataflowify.com
+convertify.com
+metricsyncify.com
+EOF
+
+# 2. Check availability (fast mode)
+python rdap_bulk_check.py --workers 20 --rate-limit 0.05 --only-free --format csv
+
+# 3. Rank results
+python rank_domains.py --top 10
+
+# Output shows domains ranked by quality:
+# Rank  Domain              Score   Syllables   Length
+# 1     syncify.com         95      4           7
+# 2     trackify.com        93      4           8
+# 3     dataflowify.com     86      5           11
+```
+
+### Understanding Syllable Counts
+
+The tool accurately counts syllables including the "ify" suffix:
+- track-i-fy = 3 syllables
+- sync-i-fy = 3 syllables  
+- pix-el-track-i-fy = 5 syllables
+- da-ta-sync-i-fy = 5 syllables
+
+### Tips for Best Results
+
+1. **Generate Many Options** - Check 100+ domains to find gems
+2. **Use Relevant Keywords** - Do research online and then include industry-specific terms
+3. **Filter by Syllables** - Domains with 3-5 syllables are ideal
+4. **Check Multiple TLDs** - Try .com, .io, .co for more options

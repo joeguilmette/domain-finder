@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Domain Ranking Tool - Rank available domains by quality criteria
 
-This tool ranks domains from rdap_bulk_check.py output based on:
+This tool ranks domains from rdap_bulk_check.py output based on configurable criteria:
 - Syllable count (fewer is better)
 - Domain length (shorter is better)
-- Relevance to conversion tracking keywords
+- Keyword relevance (customizable categories)
 - Ease of pronunciation
 
 Usage:
@@ -13,6 +13,12 @@ Usage:
     
     # Specify input and output files
     python rank_domains.py --input results.csv --output ranked.csv
+    
+    # Use custom configuration
+    python rank_domains.py --config my_config.json
+    
+    # Override keywords from command line
+    python rank_domains.py --keywords "ai,bot,smart" --keyword-bonus 20
     
     # Show only top N results
     python rank_domains.py --top 20
@@ -27,112 +33,173 @@ Example workflow:
 
 import csv
 import argparse
+import json
+import re
+from pathlib import Path
+
+# Default configuration
+DEFAULT_CONFIG = {
+    "scoring": {
+        "base_score": 100,
+        "syllable_penalty": 20,
+        "syllable_threshold": 2,
+        "length_penalty": 2
+    },
+    "keyword_categories": {
+        "conversion": {
+            "words": ["track", "convert", "pixel", "data", "metric", "sync", "link", "flow", "bridge"],
+            "bonus": 15
+        },
+        "action": {
+            "words": ["push", "send", "move", "stream", "pipe"],
+            "bonus": 10
+        },
+        "simplicity": {
+            "words": ["easy", "quick", "smart", "pro"],
+            "bonus": 8
+        }
+    },
+    "special_combinations": [
+        {
+            "primary": "track",
+            "secondary": ["pixel", "data", "metric", "ad", "form"],
+            "bonus": 20
+        },
+        {
+            "primary": "convert",
+            "secondary": ["track", "data", "lead", "form"],
+            "bonus": 20
+        },
+        {
+            "primary": "pixel",
+            "secondary": ["track", "sync", "push", "flow"],
+            "bonus": 20
+        }
+    ],
+    "penalties": {
+        "hard_to_pronounce": {
+            "patterns": ["xq", "zx", "qz", "xz"],
+            "penalty": 50
+        }
+    }
+}
+
+def load_config(config_path=None):
+    """Load configuration from file or use defaults"""
+    if config_path and Path(config_path).exists():
+        with open(config_path, 'r') as f:
+            if config_path.endswith('.json'):
+                return json.load(f)
+            else:
+                # For now, only support JSON
+                print(f"Warning: Only JSON config files are supported. Using defaults.")
+                return DEFAULT_CONFIG
+    return DEFAULT_CONFIG
 
 def count_syllables(word):
-    """More accurate syllable count for domain names"""
+    """Accurate syllable count for any English word"""
     word = word.lower()
     
-    # Manual syllable counts for common components
-    syllable_map = {
-        'sync': 1, 'link': 1, 'track': 1, 'flow': 1, 'push': 1,
-        'send': 1, 'move': 1, 'pro': 1, 'tie': 1, 'ad': 1,
-        'app': 1, 'bind': 1, 'bridge': 1, 'click': 1, 'code': 1,
-        'core': 1, 'count': 1, 'flip': 1, 'gauge': 1, 'grow': 1,
-        'max': 1, 'net': 1, 'pass': 1, 'plus': 1, 'prime': 1,
-        'pull': 1, 'quick': 1, 'scale': 1, 'shift': 1, 'snap': 1,
-        'stats': 1, 'switch': 1, 'tag': 1, 'tap': 1, 'trace': 1,
-        'turn': 1, 'web': 1, 'smart': 1, 'swift': 1, 'fast': 1,
-        'hub': 1, 'pipe': 1, 'stream': 1, 'route': 1, 'map': 1,
-        'path': 1, 'cloud': 1, 'base': 1, 'one': 1, 'all': 1,
-        'bond': 1, 'swap': 1, 'dash': 1, 'lead': 1, 'rank': 1,
-        'form': 1, 'join': 1, 'merge': 1, 'fuse': 1, 'change': 1,
-        'morph': 1,
-        # 2 syllables
-        'data': 2, 'convert': 2, 'connect': 2, 'metric': 2, 'easy': 2,
-        'pixel': 2, 'auto': 2, 'mega': 2, 'super': 2, 'ultra': 2,
-        # 3 syllables
-        'easily': 3, 'metric': 2, 'autosync': 3,
-        # ify is always 3 syllables
-        'ify': 3
+    # Special handling for common domain-related terms
+    special_cases = {
+        'ai': 2,  # A-I
+        'io': 2,  # I-O
+        'eo': 2,  # E-O
     }
     
-    # For compound words, try to break them down
-    total_syllables = 0
+    # Check special cases first
+    if word in special_cases:
+        return special_cases[word]
     
-    # Check if word ends with 'ify'
-    if word.endswith('ify'):
-        base = word[:-3]
-        total_syllables += 3  # 'ify' is 3 syllables
-        
-        # Check for known components in the base
-        for component, syll_count in sorted(syllable_map.items(), key=lambda x: -len(x[0])):
-            if base.startswith(component):
-                total_syllables += syll_count
-                base = base[len(component):]
-                if base in syllable_map:
-                    total_syllables += syllable_map[base]
-                    return total_syllables
-        
-        # If base not fully recognized, count remaining syllables
-        if base:
-            # Simple vowel counting for remaining part
-            vowels = "aeiouy"
-            base_syllables = 0
-            previous_was_vowel = False
-            
-            for char in base:
-                is_vowel = char in vowels
-                if is_vowel and not previous_was_vowel:
-                    base_syllables += 1
-                previous_was_vowel = is_vowel
-            
-            total_syllables += max(1, base_syllables)
+    # Regex patterns for syllable counting
+    vowel_runs = re.compile(r'[aeiouy]+', flags=re.I)
+    exceptions = re.compile(
+        # Silent e: like, name, home
+        r'[^aeiou]e[sd]?$|'
+        # -ely: lovely, safely (counts as 2 not 3)
+        r'[^e]ely$', 
+        flags=re.I
+    )
+    additions = re.compile(
+        # -le patterns: handle, purple, able
+        r'[^aeioulr][lr]e[sd]?$|'
+        # -es after c,g,s,z: faces, pages, roses
+        r'[csgz]es$|'
+        # -ed after t,d: started, needed
+        r'[td]ed$|'
+        # ia, io, eo combinations (not at end): media, radio
+        r'ia(?!n$)|io|eo|'
+        # -ism: realism, capitalism
+        r'ism$|'
+        # -ire: fire, tire, empire
+        r'[^aeiou]ire$|'
+        # ua, ue patterns: equal, queue
+        r'[^gq]u[ae]|'
+        # ious, eous: various, gorgeous
+        r'ious|eous|'
+        # tion, sion: nation, vision
+        r'[st]ion',
+        flags=re.I
+    )
     
-    return total_syllables
+    # Count vowel groups
+    vowel_count = len(vowel_runs.findall(word))
+    
+    # Subtract silent patterns
+    exception_count = len(exceptions.findall(word))
+    
+    # Add back incorrectly subtracted syllables
+    addition_count = len(additions.findall(word))
+    
+    # Calculate total syllables
+    syllables = vowel_count - exception_count + addition_count
+    
+    # Every word has at least one syllable
+    return max(1, syllables)
 
-def score_domain(domain):
-    """Score domain based on quality criteria"""
-    domain_name = domain.replace('.com', '').replace('ify', '')
+def score_domain(domain, config):
+    """Score domain based on configurable criteria"""
+    domain_name = domain.replace('.com', '')
+    scoring = config.get('scoring', {})
     
     # Base score
-    score = 100
+    score = scoring.get('base_score', 100)
     
     # Syllable count (fewer is better)
     syllables = count_syllables(domain_name)
-    score -= (syllables - 2) * 20  # Penalty for each syllable over 2
+    syllable_penalty = scoring.get('syllable_penalty', 20)
+    syllable_threshold = scoring.get('syllable_threshold', 2)
+    score -= (syllables - syllable_threshold) * syllable_penalty
     
     # Length (shorter is better)
-    score -= len(domain_name) * 2
+    length_penalty = scoring.get('length_penalty', 2)
+    score -= len(domain_name) * length_penalty
     
-    # Bonus for conversion/tracking related words
-    conversion_words = ['track', 'convert', 'pixel', 'data', 'metric', 'sync', 'link', 'flow', 'bridge']
-    for word in conversion_words:
-        if word in domain_name:
-            score += 15
+    # Apply keyword category bonuses
+    keyword_categories = config.get('keyword_categories', {})
+    for category_name, category_data in keyword_categories.items():
+        words = category_data.get('words', [])
+        bonus = category_data.get('bonus', 0)
+        for word in words:
+            if word in domain_name:
+                score += bonus
     
-    # Bonus for action words
-    action_words = ['push', 'send', 'move', 'stream', 'pipe']
-    for word in action_words:
-        if word in domain_name:
-            score += 10
+    # Apply special combination bonuses
+    special_combinations = config.get('special_combinations', [])
+    for combo in special_combinations:
+        primary = combo.get('primary', '')
+        secondary = combo.get('secondary', [])
+        bonus = combo.get('bonus', 0)
+        if primary in domain_name and any(w in domain_name for w in secondary):
+            score += bonus
     
-    # Bonus for simplicity words
-    simple_words = ['easy', 'quick', 'smart', 'pro']
-    for word in simple_words:
-        if word in domain_name:
-            score += 8
-    
-    # Special bonus for highly relevant combinations
-    if 'track' in domain_name and any(w in domain_name for w in ['pixel', 'data', 'metric', 'ad', 'form']):
-        score += 20
-    if 'convert' in domain_name and any(w in domain_name for w in ['track', 'data', 'lead', 'form']):
-        score += 20
-    if 'pixel' in domain_name and any(w in domain_name for w in ['track', 'sync', 'push', 'flow']):
-        score += 20
-    
-    # Penalty for hard to pronounce combinations
-    if any(combo in domain_name for combo in ['xq', 'zx', 'qz', 'xz']):
-        score -= 50
+    # Apply penalties
+    penalties = config.get('penalties', {})
+    for penalty_name, penalty_data in penalties.items():
+        patterns = penalty_data.get('patterns', [])
+        penalty = penalty_data.get('penalty', 0)
+        if any(pattern in domain_name for pattern in patterns):
+            score -= penalty
     
     return score
 
@@ -142,14 +209,40 @@ def main():
                         help='Input CSV file from rdap_bulk_check.py (default: available_domains.csv)')
     parser.add_argument('--output', '-o', default='ranked_domains.csv',
                         help='Output CSV file for rankings (default: ranked_domains.csv)')
+    parser.add_argument('--config', '-c', type=str,
+                        help='Path to JSON configuration file')
+    parser.add_argument('--keywords', '-k', type=str,
+                        help='Comma-separated keywords to boost (overrides config)')
+    parser.add_argument('--keyword-bonus', type=int, default=15,
+                        help='Bonus points for keyword matches (default: 15)')
     parser.add_argument('--top', '-t', type=int, default=50,
                         help='Show only top N results (default: 50)')
     parser.add_argument('--max-syllables', '-m', type=int,
                         help='Filter domains with more than N syllables')
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Suppress console output')
+    parser.add_argument('--export-config', action='store_true',
+                        help='Export default configuration to default_config.json')
     
     args = parser.parse_args()
+    
+    # Handle config export
+    if args.export_config:
+        with open('default_config.json', 'w') as f:
+            json.dump(DEFAULT_CONFIG, f, indent=2)
+        print("Default configuration exported to default_config.json")
+        return
+    
+    # Load configuration
+    config = load_config(args.config)
+    
+    # Override with command-line keywords if provided
+    if args.keywords:
+        keywords = [k.strip() for k in args.keywords.split(',')]
+        config['keyword_categories']['custom'] = {
+            'words': keywords,
+            'bonus': args.keyword_bonus
+        }
     
     # Read available domains
     available_domains = []
@@ -180,7 +273,7 @@ def main():
     # Score and sort domains
     scored_domains = []
     for domain in available_domains:
-        score = score_domain(domain)
+        score = score_domain(domain, config)
         # Count syllables in the full domain name (without .com)
         domain_name = domain.replace('.com', '')
         syllables = count_syllables(domain_name)
@@ -218,6 +311,11 @@ def main():
         print(f"\nTotal domains analyzed: {len(available_domains)}")
         print(f"Domains matching criteria: {len(scored_domains)}")
         print(f"Full rankings saved to: {args.output}")
+        
+        if args.config:
+            print(f"Using configuration from: {args.config}")
+        elif args.keywords:
+            print(f"Using custom keywords: {args.keywords}")
 
 if __name__ == '__main__':
     main()

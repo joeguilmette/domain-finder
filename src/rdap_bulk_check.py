@@ -12,8 +12,8 @@ Features:
 import sys
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add parent directory to path to find src module
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.checker import DomainChecker
 from src.formatters import MarkdownFormatter, CSVFormatter, ConsoleFormatter

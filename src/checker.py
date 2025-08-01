@@ -9,7 +9,13 @@ import requests
 class DomainChecker:
     """Check domain availability using RDAP protocol."""
     
-    # RDAP endpoints for different TLDs
+    # RDAP (Registration Data Access Protocol) endpoints for different TLDs
+    # These endpoints are maintained by the respective registries and are stable.
+    # To find RDAP endpoints for new TLDs:
+    # 1. Check IANA's RDAP Bootstrap file: https://data.iana.org/rdap/dns.json
+    # 2. Look up the TLD's registry operator
+    # 3. Search for "[registry name] RDAP endpoint"
+    # Note: Not all TLDs support RDAP yet; some still use WHOIS only
     RDAP_ENDPOINTS = {
         'com': 'https://rdap.verisign.com/com/v1/domain/{}',
         'net': 'https://rdap.verisign.com/net/v1/domain/{}',
@@ -19,9 +25,11 @@ class DomainChecker:
         'co': 'https://rdap.nic.co/domain/{}',
         'dev': 'https://rdap.nic.google/domain/{}',
         'app': 'https://rdap.nic.google/domain/{}',
+        # Add more TLD endpoints as needed
     }
     
     # Default RDAP endpoint for unknown TLDs
+    # This may not work for all TLDs, but it's a reasonable fallback
     DEFAULT_RDAP = 'https://rdap.org/domain/{}'
     
     def __init__(self, rate_limit: float = 0.1, timeout: int = 5, retry_count: int = 1):

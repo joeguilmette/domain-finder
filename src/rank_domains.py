@@ -27,8 +27,8 @@ Usage:
     python rank_domains.py --max-syllables 5
 
 Example workflow:
-    1. Check domains: python rdap_bulk_check.py --only-free --format csv --output available.csv
-    2. Rank results: python rank_domains.py --input available.csv --top 50
+    1. Check domains: python src/rdap_bulk_check.py --only-free --format csv --output available.csv
+    2. Rank results: python src/rank_domains.py --input available.csv --top 50
 """
 
 import csv
@@ -37,64 +37,38 @@ import json
 import re
 from pathlib import Path
 
-# Default configuration
-DEFAULT_CONFIG = {
-    "scoring": {
-        "base_score": 100,
-        "syllable_penalty": 20,
-        "syllable_threshold": 2,
-        "length_penalty": 2
-    },
-    "keyword_categories": {
-        "conversion": {
-            "words": ["track", "convert", "pixel", "data", "metric", "sync", "link", "flow", "bridge"],
-            "bonus": 15
-        },
-        "action": {
-            "words": ["push", "send", "move", "stream", "pipe"],
-            "bonus": 10
-        },
-        "simplicity": {
-            "words": ["easy", "quick", "smart", "pro"],
-            "bonus": 8
-        }
-    },
-    "special_combinations": [
-        {
-            "primary": "track",
-            "secondary": ["pixel", "data", "metric", "ad", "form"],
-            "bonus": 20
-        },
-        {
-            "primary": "convert",
-            "secondary": ["track", "data", "lead", "form"],
-            "bonus": 20
-        },
-        {
-            "primary": "pixel",
-            "secondary": ["track", "sync", "push", "flow"],
-            "bonus": 20
-        }
-    ],
-    "penalties": {
-        "hard_to_pronounce": {
-            "patterns": ["xq", "zx", "qz", "xz"],
-            "penalty": 50
-        }
-    }
-}
+# Import utils for config loading
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from src.utils import load_config as load_config_util
 
 def load_config(config_path=None):
     """Load configuration from file or use defaults"""
-    if config_path and Path(config_path).exists():
-        with open(config_path, 'r') as f:
-            if config_path.endswith('.json'):
+    # Try to use utils function, fall back to local loading
+    try:
+        return load_config_util(config_path)
+    except:
+        # Fallback to simple loading
+        if config_path and Path(config_path).exists():
+            with open(config_path, 'r') as f:
                 return json.load(f)
-            else:
-                # For now, only support JSON
-                print(f"Warning: Only JSON config files are supported. Using defaults.")
-                return DEFAULT_CONFIG
-    return DEFAULT_CONFIG
+        # Load default config
+        default_path = Path(__file__).parent.parent / 'config' / 'default_config.json'
+        if default_path.exists():
+            with open(default_path, 'r') as f:
+                return json.load(f)
+        # Absolute fallback - minimal config
+        return {
+            "scoring": {
+                "base_score": 100,
+                "syllable_penalty": 20,
+                "syllable_threshold": 3,
+                "length_penalty": 2
+            },
+            "keyword_categories": {},
+            "special_combinations": [],
+            "penalties": {}
+        }
 
 def count_syllables(word):
     """Accurate syllable count for any English word"""
@@ -159,7 +133,11 @@ def count_syllables(word):
 
 def score_domain(domain, config):
     """Score domain based on configurable criteria"""
-    domain_name = domain.replace('.com', '')
+    # Remove TLD if present
+    if '.' in domain:
+        domain_name = domain.rsplit('.', 1)[0]
+    else:
+        domain_name = domain
     scoring = config.get('scoring', {})
     
     # Base score
@@ -228,9 +206,12 @@ def main():
     
     # Handle config export
     if args.export_config:
-        with open('default_config.json', 'w') as f:
-            json.dump(DEFAULT_CONFIG, f, indent=2)
-        print("Default configuration exported to default_config.json")
+        # Load and export current config
+        config = load_config(args.config)
+        export_path = 'exported_config.json'
+        with open(export_path, 'w') as f:
+            json.dump(config, f, indent=2)
+        print(f"Current configuration exported to {export_path}")
         return
     
     # Load configuration
@@ -251,8 +232,8 @@ def main():
             reader = csv.reader(f)
             # Try to detect if there's a header
             first_row = next(reader, None)
-            if first_row and not first_row[0].endswith('.com'):
-                # Skip header
+            if first_row and not any(first_row[0].endswith(f'.{tld}') for tld in ['com', 'net', 'org', 'io', 'dev', 'app', 'co']):
+                # Skip header (doesn't look like a domain)
                 pass
             elif first_row:
                 # No header, process first row
@@ -263,7 +244,7 @@ def main():
                     available_domains.append(row[0])
     except FileNotFoundError:
         print(f"Error: Input file '{args.input}' not found.")
-        print("Make sure to run rdap_bulk_check.py first with --only-free --format csv")
+        print("Make sure to run src/rdap_bulk_check.py first with --only-free --format csv")
         return
     
     if not available_domains:
@@ -274,8 +255,11 @@ def main():
     scored_domains = []
     for domain in available_domains:
         score = score_domain(domain, config)
-        # Count syllables in the full domain name (without .com)
-        domain_name = domain.replace('.com', '')
+        # Count syllables in the domain name (without TLD)
+        if '.' in domain:
+            domain_name = domain.rsplit('.', 1)[0]
+        else:
+            domain_name = domain
         syllables = count_syllables(domain_name)
         
         # Apply syllable filter if specified
@@ -293,7 +277,12 @@ def main():
         writer.writerow(['Domain', 'Score', 'Syllables', 'Length'])
         
         for domain, score, syllables in scored_domains:
-            length = len(domain.replace('.com', ''))
+            # Calculate length without TLD
+            if '.' in domain:
+                domain_name = domain.rsplit('.', 1)[0]
+            else:
+                domain_name = domain
+            length = len(domain_name)
             writer.writerow([domain, score, syllables, length])
     
     # Print results to console unless quiet
@@ -305,7 +294,12 @@ def main():
         print("-" * 70)
         
         for i, (domain, score, syllables) in enumerate(scored_domains[:display_count], 1):
-            length = len(domain.replace('.com', ''))
+            # Calculate length without TLD
+            if '.' in domain:
+                domain_name = domain.rsplit('.', 1)[0]
+            else:
+                domain_name = domain
+            length = len(domain_name)
             print(f"{i:<6}{domain:<30}{score:<8}{syllables:<12}{length}")
         
         print(f"\nTotal domains analyzed: {len(available_domains)}")

@@ -1,0 +1,106 @@
+{
+  "domain_settings": {
+    "default_tld": "com",
+    "check_additional_tlds": ["net", "org"],
+    "append_tld_to_output": true
+  },
+  "output_settings": {
+    "session_retention_days": 30,
+    "create_summary": true,
+    "formats": {
+      "csv": {"headers": ["Domain", "Available", "Score", "Syllables"]},
+      "markdown": {"include_timestamp": true}
+    }
+  },
+  "generation": {
+    "max_length": 20,
+    "min_length": 4,
+    "max_domains": 2000,
+    "patterns": {
+      "single_word": true,
+      "two_word_combo": true,
+      "prefix_patterns": ["get", "my", "the", "go", "find", "best"],
+      "suffix_patterns": ["hub", "spot", "now", "zone", "pro", "base", "site"],
+      "creative_suffixes": ["ly", "ify", "io", "co", "app"],
+      "compound_words": true
+    },
+    "excluded_patterns": ["xxx", "test", "temp", "admin", "login"]
+  },
+  "scoring": {
+    "base_score": 100,
+    "syllable_penalty": 20,
+    "syllable_threshold": 3,
+    "length_penalty": 2
+  },
+  "keyword_categories": {
+    "location_primary": {
+      "words": ["thailand", "thai", "siam", "bangkok", "bkk"],
+      "bonus": 30
+    },
+    "diving_primary": {
+      "words": ["scuba", "dive", "diver", "diving"],
+      "bonus": 30
+    },
+    "trip_terms": {
+      "words": ["trip", "trips", "tour", "tours", "travel", "voyage", "adventure", "expedition", "journey", "excursion"],
+      "bonus": 25
+    },
+    "action_words": {
+      "words": ["explore", "discover", "book", "find", "plan", "guide", "search"],
+      "bonus": 20
+    },
+    "service_terms": {
+      "words": ["center", "shop", "pro", "hub", "base", "spot", "site"],
+      "bonus": 15
+    },
+    "ocean_terms": {
+      "words": ["ocean", "marine", "underwater", "sea", "reef", "coral"],
+      "bonus": 15
+    },
+    "quality_terms": {
+      "words": ["best", "top", "premier", "expert", "certified"],
+      "bonus": 10
+    },
+    "tech_terms": {
+      "words": ["go", "now", "plus", "zone", "info", "list"],
+      "bonus": 10
+    }
+  },
+  "special_combinations": [
+    {
+      "primary": "thai",
+      "secondary": ["dive", "scuba", "diving", "diver"],
+      "bonus": 35
+    },
+    {
+      "primary": "thailand",
+      "secondary": ["dive", "scuba", "diving", "trips"],
+      "bonus": 35
+    },
+    {
+      "primary": "siam",
+      "secondary": ["dive", "scuba", "diving", "diver"],
+      "bonus": 30
+    },
+    {
+      "primary": "bangkok",
+      "secondary": ["dive", "scuba", "diving"],
+      "bonus": 30
+    },
+    {
+      "primary": "bkk",
+      "secondary": ["dive", "scuba", "diving"],
+      "bonus": 30
+    }
+  ],
+  "penalties": {
+    "hard_to_pronounce": {
+      "patterns": ["xq", "zx", "qz", "xz", "qw", "wx"],
+      "penalty": 50
+    },
+    "too_generic": {
+      "patterns": ["website", "online", "web", "net", "site"],
+      "penalty": 20
+    }
+  }
+}

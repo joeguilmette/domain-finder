@@ -1,0 +1,43 @@
+{
+  "domain_settings": {
+    "default_tld": "com",
+    "check_additional_tlds": [],
+    "append_tld_to_output": true
+  },
+  "output_settings": {
+    "session_retention_days": 30,
+    "create_summary": true,
+    "formats": {
+      "csv": {"headers": ["Domain", "Available", "Score", "Syllables"]},
+      "markdown": {"include_timestamp": true}
+    }
+  },
+  "generation": {
+    "max_length": 20,
+    "min_length": 4,
+    "max_domains": 1000,
+    "patterns": {
+      "single_word": true,
+      "two_word_combo": true,
+      "prefix_patterns": [],
+      "suffix_patterns": [],
+      "creative_suffixes": [],
+      "compound_words": false
+    },
+    "excluded_patterns": ["xxx", "test", "temp", "admin", "login"]
+  },
+  "scoring": {
+    "base_score": 100,
+    "syllable_penalty": 20,
+    "syllable_threshold": 3,
+    "length_penalty": 2
+  },
+  "keyword_categories": {},
+  "special_combinations": [],
+  "penalties": {
+    "hard_to_pronounce": {
+      "patterns": ["xq", "zx", "qz", "xz", "qw", "wx"],
+      "penalty": 50
+    }
+  }
+}

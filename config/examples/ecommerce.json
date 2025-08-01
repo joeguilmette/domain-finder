@@ -1,0 +1,83 @@
+{
+  "domain_settings": {
+    "default_tld": "com",
+    "check_additional_tlds": ["shop", "store", "market"],
+    "append_tld_to_output": true
+  },
+  "output_settings": {
+    "session_retention_days": 30,
+    "create_summary": true,
+    "formats": {
+      "csv": {"headers": ["Domain", "Available", "Score", "Syllables"]},
+      "markdown": {"include_timestamp": true}
+    }
+  },
+  "generation": {
+    "max_length": 18,
+    "min_length": 5,
+    "max_domains": 2000,
+    "patterns": {
+      "single_word": true,
+      "two_word_combo": true,
+      "prefix_patterns": ["buy", "shop", "get", "the", "my"],
+      "suffix_patterns": ["mart", "shop", "store", "market", "deals", "outlet"],
+      "creative_suffixes": ["ly", "ify"],
+      "compound_words": true
+    },
+    "excluded_patterns": ["xxx", "test", "fake", "scam"]
+  },
+  "scoring": {
+    "base_score": 100,
+    "syllable_penalty": 20,
+    "syllable_threshold": 3,
+    "length_penalty": 2
+  },
+  "keyword_categories": {
+    "commerce_primary": {
+      "words": ["shop", "buy", "store", "market", "deal"],
+      "bonus": 30
+    },
+    "product_terms": {
+      "words": ["gear", "goods", "items", "products", "stuff"],
+      "bonus": 20
+    },
+    "quality_descriptors": {
+      "words": ["best", "top", "premium", "quality", "choice"],
+      "bonus": 15
+    },
+    "value_terms": {
+      "words": ["save", "discount", "cheap", "value", "budget"],
+      "bonus": 15
+    },
+    "convenience": {
+      "words": ["quick", "fast", "easy", "express", "instant"],
+      "bonus": 20
+    },
+    "trust_signals": {
+      "words": ["trusted", "verified", "authentic", "genuine", "official"],
+      "bonus": 25
+    }
+  },
+  "special_combinations": [
+    {
+      "primary": "shop",
+      "secondary": ["express", "direct", "now", "hub"],
+      "bonus": 30
+    },
+    {
+      "primary": "buy",
+      "secondary": ["direct", "now", "best", "smart"],
+      "bonus": 30
+    }
+  ],
+  "penalties": {
+    "hard_to_pronounce": {
+      "patterns": ["xq", "zx", "qz", "xz"],
+      "penalty": 50
+    },
+    "sketchy_terms": {
+      "patterns": ["cheap", "fake", "replica", "knockoff"],
+      "penalty": 30
+    }
+  }
+}

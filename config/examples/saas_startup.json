@@ -1,0 +1,79 @@
+{
+  "domain_settings": {
+    "default_tld": "com",
+    "check_additional_tlds": ["io", "app", "dev"],
+    "append_tld_to_output": true
+  },
+  "output_settings": {
+    "session_retention_days": 30,
+    "create_summary": true,
+    "formats": {
+      "csv": {"headers": ["Domain", "Available", "Score", "Syllables"]},
+      "markdown": {"include_timestamp": true}
+    }
+  },
+  "generation": {
+    "max_length": 15,
+    "min_length": 4,
+    "max_domains": 2000,
+    "patterns": {
+      "single_word": true,
+      "two_word_combo": true,
+      "prefix_patterns": ["get", "use", "try", "my"],
+      "suffix_patterns": ["app", "api", "hub", "lab", "dev", "io"],
+      "creative_suffixes": ["ly", "ify", "er"],
+      "compound_words": false
+    },
+    "excluded_patterns": ["xxx", "test", "temp", "admin", "login", "beta"]
+  },
+  "scoring": {
+    "base_score": 100,
+    "syllable_penalty": 25,
+    "syllable_threshold": 2,
+    "length_penalty": 3
+  },
+  "keyword_categories": {
+    "tech_primary": {
+      "words": ["cloud", "sync", "api", "data", "auto", "smart"],
+      "bonus": 30
+    },
+    "action_verbs": {
+      "words": ["track", "sync", "push", "stream", "scale", "deploy"],
+      "bonus": 25
+    },
+    "simplicity": {
+      "words": ["easy", "simple", "quick", "fast", "instant"],
+      "bonus": 20
+    },
+    "modern_tech": {
+      "words": ["ai", "ml", "bot", "flow", "dash", "stack"],
+      "bonus": 20
+    },
+    "professional": {
+      "words": ["pro", "team", "work", "biz", "corp"],
+      "bonus": 15
+    }
+  },
+  "special_combinations": [
+    {
+      "primary": "cloud",
+      "secondary": ["sync", "api", "data", "flow"],
+      "bonus": 35
+    },
+    {
+      "primary": "smart",
+      "secondary": ["track", "sync", "flow", "data"],
+      "bonus": 30
+    }
+  ],
+  "penalties": {
+    "hard_to_pronounce": {
+      "patterns": ["xq", "zx", "qz", "xz", "qw", "wx"],
+      "penalty": 50
+    },
+    "too_generic": {
+      "patterns": ["software", "system", "solution", "platform"],
+      "penalty": 20
+    }
+  }
+}

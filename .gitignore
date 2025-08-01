@@ -44,5 +44,8 @@ domain_results.csv
 *.log
 .cache/
 
+# Output directory
+output/
+
 # Keep example output
 !examples/sample_output.md

@@ -17,12 +17,12 @@
     "min_length": 5,
     "max_domains": 2000,
     "patterns": {
-      "single_word": true,
+      "single_word": false,
       "two_word_combo": true,
-      "prefix_patterns": ["buy", "shop", "get", "the", "my"],
-      "suffix_patterns": ["mart", "shop", "store", "market", "deals", "outlet"],
-      "creative_suffixes": ["ly", "ify"],
-      "compound_words": true
+      "prefix_patterns": [],
+      "suffix_patterns": ["mart", "shop", "store", "market"],
+      "creative_suffixes": [],
+      "compound_words": false
     },
     "excluded_patterns": ["xxx", "test", "fake", "scam"]
   },
@@ -35,18 +35,20 @@
   "keyword_categories": {
     "commerce_primary": {
       "words": ["shop", "buy", "store", "market", "deal"],
-      "bonus": 30
+      "bonus": 30,
+      "required": true
     },
     "product_terms": {
-      "words": ["gear", "goods", "items", "products", "stuff"],
-      "bonus": 20
+      "words": ["gear", "goods", "items", "products"],
+      "bonus": 20,
+      "required": true
     },
     "quality_descriptors": {
       "words": ["best", "top", "premium", "quality", "choice"],
       "bonus": 15
     },
     "value_terms": {
-      "words": ["save", "discount", "cheap", "value", "budget"],
+      "words": ["save", "discount", "value", "budget"],
       "bonus": 15
     },
     "convenience": {
@@ -76,7 +78,7 @@
       "penalty": 50
     },
     "sketchy_terms": {
-      "patterns": ["cheap", "fake", "replica", "knockoff"],
+      "patterns": ["fake", "replica", "knockoff", "counterfeit"],
       "penalty": 30
     }
   }

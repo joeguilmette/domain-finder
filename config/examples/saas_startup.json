@@ -17,11 +17,11 @@
     "min_length": 4,
     "max_domains": 2000,
     "patterns": {
-      "single_word": true,
+      "single_word": false,
       "two_word_combo": true,
-      "prefix_patterns": ["get", "use", "try", "my"],
-      "suffix_patterns": ["app", "api", "hub", "lab", "dev", "io"],
-      "creative_suffixes": ["ly", "ify", "er"],
+      "prefix_patterns": [],
+      "suffix_patterns": ["app", "api", "hub", "lab"],
+      "creative_suffixes": [],
       "compound_words": false
     },
     "excluded_patterns": ["xxx", "test", "temp", "admin", "login", "beta"]
@@ -35,11 +35,13 @@
   "keyword_categories": {
     "tech_primary": {
       "words": ["cloud", "sync", "api", "data", "auto", "smart"],
-      "bonus": 30
+      "bonus": 30,
+      "required": true
     },
     "action_verbs": {
       "words": ["track", "sync", "push", "stream", "scale", "deploy"],
-      "bonus": 25
+      "bonus": 25,
+      "required": true
     },
     "simplicity": {
       "words": ["easy", "simple", "quick", "fast", "instant"],

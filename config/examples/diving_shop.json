@@ -14,15 +14,15 @@
   },
   "generation": {
     "max_length": 20,
-    "min_length": 4,
+    "min_length": 6,
     "max_domains": 2000,
     "patterns": {
-      "single_word": true,
+      "single_word": false,
       "two_word_combo": true,
-      "prefix_patterns": ["get", "my", "the", "go", "find", "best"],
-      "suffix_patterns": ["hub", "spot", "now", "zone", "pro", "base", "site"],
-      "creative_suffixes": ["ly", "io", "co"],
-      "compound_words": true
+      "prefix_patterns": ["discover", "explore", "learn"],
+      "suffix_patterns": ["diving", "divers", "dive", "scuba"],
+      "creative_suffixes": [],
+      "compound_words": false
     },
     "excluded_patterns": ["xxx", "test", "temp", "admin", "login"]
   },
@@ -34,28 +34,30 @@
   },
   "keyword_categories": {
     "location_primary": {
-      "words": ["thailand", "thai", "siam", "bangkok", "bkk"],
-      "bonus": 30
+      "words": ["thailand", "thai", "siam", "bangkok", "bkk", "krungthep"],
+      "bonus": 30,
+      "required": true
     },
     "diving_primary": {
-      "words": ["scuba", "dive", "diver", "diving"],
-      "bonus": 30
+      "words": ["scuba", "dive", "diver", "diving", "underwater", "ocean", "marine"],
+      "bonus": 30,
+      "required": true
     },
-    "trip_terms": {
-      "words": ["trip", "tour", "travel", "adventure", "expedition"],
+    "certification_terms": {
+      "words": ["certified", "certification", "instructor", "professional", "openwater", "advanced"],
       "bonus": 25
     },
-    "action_words": {
-      "words": ["explore", "discover", "book", "find", "guide"],
+    "learning_terms": {
+      "words": ["learn", "course", "training", "school", "academy", "education"],
       "bonus": 20
     },
     "service_terms": {
-      "words": ["center", "shop", "pro", "school", "academy"],
+      "words": ["center", "shop", "pro", "expert", "master"],
       "bonus": 15
     },
     "ocean_terms": {
-      "words": ["ocean", "marine", "underwater", "sea", "reef", "coral"],
-      "bonus": 15
+      "words": ["sea", "reef", "coral", "aqua", "blue"],
+      "bonus": 10
     }
   },
   "special_combinations": [

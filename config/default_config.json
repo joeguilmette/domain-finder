@@ -17,7 +17,7 @@
     "min_length": 4,
     "max_domains": 1000,
     "patterns": {
-      "single_word": true,
+      "single_word": false,
       "two_word_combo": true,
       "prefix_patterns": [],
       "suffix_patterns": [],
